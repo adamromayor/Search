@@ -35,6 +35,17 @@ class Coordinate {
     }
 };
 
+class DistanceCoordinate {
+    constructor(x, y, dist) {
+        this.x = x;
+        this.y = y;
+        this.dist = dist;
+        this.path = new Array();
+    }
+};
+
+
+
 function testPath() {
 
     for (let i = 0; i < 20; i++) {
@@ -63,7 +74,7 @@ var Grid = {
     autoFlag: 0,
     searchType: 0,
     start: function () {
-        this.canvas.width = 1000;
+        this.canvas.width = 1125;
         this.canvas.height = 800;
         this.context = this.canvas.getContext("2d");
         this.canvas.style.cursor = "none";
@@ -101,14 +112,14 @@ var Grid = {
         this.clear();
         this.state = -1;
         Grid.sx = null;
-        document.getElementById("start").innerHTML = "Start: (x, y)";
-        document.getElementById("end").innerHTML = "End: (x, y)";
-        document.getElementById("auto").innerHTML = "Auto Search";
-        document.getElementById("path").innerHTML = "";
         //document.getElementById("path").innerHTML = "";
         walls = [];
         pathCoords = [];
         wallCoords = [];
+        document.getElementById("start").innerHTML = "Start: (x, y)";
+        document.getElementById("end").innerHTML = "End: (x, y)";
+        document.getElementById("auto").innerHTML = "Auto Search";
+        document.getElementById("path").innerHTML = "";
     },
     resetState: function (x) {
 
@@ -173,6 +184,40 @@ function component(width, height, r, g, b, x, y) {
     }
 }
 
+function generateWalls() {
+
+
+    //will not update if same as starting or ending coordinate
+    for (let i = 0; i < Grid.canvas.width / Grid.cellSize; i++) {
+
+        let xcoord = Math.floor((Math.random() * Grid.canvas.width / Grid.cellSize));
+        let ycoord = Math.floor((Math.random() * Grid.canvas.height / Grid.cellSize));
+
+        if (startPoint.x == xcoord * Grid.cellSize && startPoint.y == ycoord * Grid.cellSize ||
+            endPoint.x == xcoord * Grid.cellSize && endPoint.y == ycoord * Grid.cellSize) {
+            Grid.sx = null;
+            i--;
+        }
+        else {
+            let coord = new Coordinate(xcoord, ycoord);
+
+            if (!inList(coord, walls)) {
+
+                walls.push(new component(Grid.cellSize - 1, Grid.cellSize - 1, 120, 120, 120, xcoord * Grid.cellSize, ycoord * Grid.cellSize));
+                wallCoords.push(new Coordinate(xcoord, ycoord));
+
+            }
+            else {
+                i--; //if wall exists will run an additional iteration, so total walls still = n
+            }
+
+        }
+    }
+    Grid.sx = null;
+    Grid.resetState(2);
+}
+
+
 function findBFS(startingPoint, endingPoint, barriers) {
 
     let myPath = new Array();
@@ -219,9 +264,11 @@ function findBFS(startingPoint, endingPoint, barriers) {
                 visited.push(coord);
 
                 //only prints if Automatic Search is off
+                /*
                 if (Grid.autoFlag === 0) {
                     Grid.printPath(newPath);
                 }
+                */
             }
         }
 
@@ -239,9 +286,11 @@ function findBFS(startingPoint, endingPoint, barriers) {
                 visited.push(coord);
 
                 //only prints if Automatic Search is off
+                /*
                 if (Grid.autoFlag === 0) {
                     Grid.printPath(newPath);
                 }
+                */
             }
         }
 
@@ -258,9 +307,11 @@ function findBFS(startingPoint, endingPoint, barriers) {
                 visited.push(coord);
 
                 //only prints if Automatic Search is off
+                /*
                 if (Grid.autoFlag === 0) {
                     Grid.printPath(newPath);
                 }
+                */
             }
         }
 
@@ -277,9 +328,11 @@ function findBFS(startingPoint, endingPoint, barriers) {
                 visited.push(coord);
 
                 //only prints if Automatic Search is off
+                /*
                 if (Grid.autoFlag === 0) {
                     Grid.printPath(newPath);
                 }
+                */
             }
         }
 
@@ -333,7 +386,7 @@ function findDFS(startingPoint, endingPoint, barriers) {
                 }
                 else {
                     if (Grid.autoFlag == 0) {
-                      //  Grid.printPath(Path);
+                        //  Grid.printPath(Path);
                     }
                 }
                 //will continue if not in list and not visited
@@ -357,7 +410,7 @@ function findDFS(startingPoint, endingPoint, barriers) {
                 }
                 else {
                     if (Grid.autoFlag == 0) {
-                    //    Grid.printPath(Path);
+                        //    Grid.printPath(Path);
                     }
                 }
                 //will continue if not in list and not visited
@@ -381,7 +434,7 @@ function findDFS(startingPoint, endingPoint, barriers) {
                 }
                 else {
                     if (Grid.autoFlag == 0) {
-                  //      Grid.printPath(Path);
+                        //      Grid.printPath(Path);
                     }
                 }
                 //will continue if not in list and not visited
@@ -404,7 +457,7 @@ function findDFS(startingPoint, endingPoint, barriers) {
                 }
                 else {
                     if (Grid.autoFlag == 0) {
-                   //     Grid.printPath(Path);
+                        //     Grid.printPath(Path);
                     }
                 }
                 //will continue if not in list and not visited
@@ -421,10 +474,204 @@ function findDFS(startingPoint, endingPoint, barriers) {
 
 }
 
-function findDA(startingPoint, endingPoint, barriers, solutionPath) {
+function findDA(startingPoint, endingPoint, barriers) {
+
+    var dist = new Array();
+    var q = new Array();
+    let maxX = Grid.canvas.width / Grid.cellSize;
+    let maxY = Grid.canvas.height / Grid.cellSize;
+    let v = new DistanceCoordinate();
+
+    if (startingPoint == null || endingPoint == null) return false;
+
+    if (equalCoords(startingPoint, endingPoint)) return true;
+
+
+    //initiaize distance array
+    for (let i = 0; i < maxX; i++) {
+        for (let j = 0; j < maxY; j++) {
+
+            let coord = new Coordinate(i, j);
+
+
+            if (equalCoords(coord, startingPoint)) { //source node has distance of zero
+                dist.push(new DistanceCoordinate(i, j, 0));
+                q.push(coord);
+            }
+            //walls aren't included in distance array
+            else {
+                dist.push(new DistanceCoordinate(i, j, Number.MAX_SAFE_INTEGER)); //every other node has distance of infinity
+                q.push(coord);
+            }
+        }
+    }
+
+
+    while (q.length > 0) {
+
+        v = findMin(q, dist);
+
+        //returns -1 when v can't be found in list
+        if (deleteFromList(v, q) === -1) { //deletes vertex from q
+            return false;
+        }
+
+
+
+        let x = v.x;
+        let y = v.y;
+        let d = v.dist;
+        let v_index = indexOf(v, dist);
+
+
+        if (d === 0) {
+            let coord = new Coordinate(x, y);
+            dist[v_index].path.push(coord);
+            // document.getElementById("test").innerHTML = "Pushed coordinate onto path";
+        }
+
+        //For each neighbor of V
+        //Left
+        if (x - 1 >= 0) {
+            let coord = new Coordinate(x - 1, y);
+            let alt = d + 1;
+            let index = v_index - maxY;
+            //   let index = indexOf(coord, dist);
+            if (alt < dist[index].dist) {
+                if (!inList(coord, barriers)) {
+                    dist[index].dist = alt;
+                    //saves path to coordinate
+                    //path from source until previous node + new node
+                    dist[index].path = dist[v_index].path.slice();
+                    dist[index].path.push(coord);
+                }
+            }
+
+        }
+
+        //Up
+        if (y - 1 >= 0) {
+            let coord = new Coordinate(x, y - 1);
+            let alt = d + 1;
+            let index = v_index - 1;
+            //  let index = indexOf(coord, dist);
+            if (alt < dist[index].dist) {
+                if (!inList(coord, barriers)) {
+                    dist[index].dist = alt;
+                    //saves path to coordinate
+                    //path from source until previous node + new node
+                    dist[index].path = dist[v_index].path.slice();
+                    dist[index].path.push(coord);
+                }
+            }
+        }
+
+
+        //Right
+        if (x + 1 < maxX) {
+            let coord = new Coordinate(x + 1, y);
+            let alt = d + 1;
+            let index = v_index + maxY;
+            //let index = indexOf(coord, dist);
+            if (alt < dist[index].dist) {
+                if (!inList(coord, barriers)) {
+                    dist[index].dist = alt;
+                    //saves path to coordinate
+                    //path from source until previous node + new node
+                    dist[index].path = dist[v_index].path.slice();
+                    dist[index].path.push(coord);
+                }
+            }
+        }
+
+
+
+        //Down
+        if (y + 1 < maxY) {
+            let coord = new Coordinate(x, y + 1);
+
+            let alt = d + 1;
+            let index = v_index + 1;
+            //let index = indexOf(coord, dist);
+            if (alt < dist[index].dist) {
+                if (!inList(coord, barriers)) {
+                    dist[index].dist = alt;
+                    //saves path to coordinate
+                    //path from source until previos node + new node
+                    dist[index].path = dist[v_index].path.slice();
+                    dist[index].path.push(coord);
+                }
+            }
+        }
+    }
+
+    let index = indexOf(endingPoint, dist);
+
+    if (dist[index].dist < Number.MAX_SAFE_INTEGER) {
+        pathCoords = dist[index].path.slice();
+        return true;
+    }
 
     return false;
 
+}
+
+//List has List.x and List.y
+//Deletes node in list and returns
+
+function deleteFromList(node, List) {
+
+    for (let i = 0; i < List.length; i++) {
+
+        //   s += " (" + List[i].x +", " + List[i].y +")";
+
+        if ((node.x === List[i].x) && (node.y === List[i].y)) {
+            List.splice(i, 1);
+            return 0;
+        }
+    }
+    return -1;
+}
+
+//find index of distance coordinate in Distance array
+function indexOf(coord, dArray) {
+
+    for (let i = 0; i < dArray.length; i++) {
+        if (coord.x == dArray[i].x && coord.y == dArray[i].y) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+
+//finds vertex with minimum distance from source
+//returns that coordinate
+//only returns if coordinate is still in q
+function findMin(q, distanceArray) {
+
+    let dCoord = new DistanceCoordinate(-1, -1, Number.MAX_SAFE_INTEGER);
+    let min = Number.MAX_SAFE_INTEGER;
+
+    for (let i = 0; i < distanceArray.length; i++) {
+
+        let coord = new Coordinate(distanceArray[i].x, distanceArray[i].y);
+
+        if (distanceArray[i].dist <= min) {
+            if (inList(coord, q)) {
+                min = distanceArray[i].dist;
+                dCoord.x = distanceArray[i].x;
+                dCoord.y = distanceArray[i].y;
+                dCoord.dist = distanceArray[i].dist;
+            }
+        }
+
+    }
+
+    if (dCoord.x == -1) return false;
+
+    return dCoord;
 }
 
 function equalCoords(a, b) {
@@ -647,7 +894,7 @@ function updateGrid() {
     if (Grid.state === BFS_SEARCH) {
 
         Grid.sx = null;
-        
+
         if (findBFS(startCoords, endCoords, wallCoords)) {
             Grid.state = PATH_FOUND;//path found
         } else {
@@ -713,7 +960,11 @@ function updateGrid() {
                 }
             }
             else if (Grid.searchType === 2) {
-                //still need to implement
+                if (findDA(startCoords, endCoords, wallCoords)
+                    && Grid.state != RESET_START && Grid.state != RESET_END) {
+                    Grid.sx = null;
+                    Grid.printPath(pathCoords);
+                }
             }
         }
 

@@ -50,28 +50,55 @@
 
 
 	<div class="jumbotron">
-		<h1>Welcome to Search Algorithms!</h1>
+		<h1>Different Searching Algorithms!</h1>
 		<p class="lead">This website is meant to show how different Search Algorithms work.</p>
 	</div>
 
 
 	<div class="container">
 		<div class="row">
-			<div class="btn-group">
-				<button type="button" class="btn btn-primary" id="start" onclick="Grid.resetState(3)">Start:
-					(x, y)</button>
+			<div class="col-sm-6">
+				<div class="btn-group btn-group-justified">
 
-				<button type="button" class="btn btn-primary" id="end" onclick="Grid.resetState(4)">End: (x,
-					y)</button>
-				<button type="button" class="btn btn-primary" onclick="Grid.reset()">Reset</button>
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" id="start" onclick="Grid.resetState(3)">Start:
+							(x, y)</button>
+					</div>
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" id="end" onclick="Grid.resetState(4)">End: (x,
+							y)</button>
+					</div>
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" onclick="Grid.resetState(2)">Add / Remove Wall</button>
+					</div>
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" onclick="generateWalls()">Random Walls</button>
+					</div>
+				</div>
+			</div>
 
-				<div class="btn-group">
-					<button type="button" class="btn btn-primary" data-toggle="dropdown">Search
-						<span class="caret"></span></button>
-					<ul class="dropdown-menu" role="menu">
-						<li><button type = "button" class = "btn btn-block" onclick="Grid.resetState(5)">BFS</button></a></li>
-						<li><button type = "button" class = "btn btn-block" onclick="Grid.resetState(6)">DFS</button></a></li>
-					</ul>
+			<div class="col-sm-4">
+				<div class="btn-group btn-group-justified">
+
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" onclick="Grid.resetState(5)">BFS</button>
+					</div>
+
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" onclick="Grid.resetState(6)">DFS</button>
+					</div>
+
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" onclick="Grid.resetState(7)">Dijkstra's</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-sm-2">
+				<div class="btn-group btn-group-justified">
+					<div class="btn-group">
+						<button type="button" class="btn btn-danger" onclick="Grid.reset()">Reset</button>
+					</div>
 				</div>
 			</div>
 

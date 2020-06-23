@@ -42,36 +42,59 @@
 
 	<div class="jumbotron">
 		<h1>Breadth First Search</h1>
-		<p class="lead">This shows the BFS algorithm. Click on the grid to choose a start point, end point, and create barriers!</p>
+		<p class="lead">This shows the BFS algorithm. Click on the grid to choose a start point, end point, and create
+			barriers!</p>
 	</div>
-
 
 	<div class="container">
 		<div class="row">
-			<div class="col-sm-2 text-center">
-				<button type="button" class="btn btn-primary btn-block" id="start" onclick="Grid.resetState(3)">Start:
-					(x, y)</button>
+			<div class="col-sm-6">
+				<div class="btn-group btn-group-justified">
+
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" id="start" onclick="Grid.resetState(3)">Start:
+							(x, y)</button>
+					</div>
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" id="end" onclick="Grid.resetState(4)">End: (x,
+							y)</button>
+					</div>
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" onclick="Grid.resetState(2)">Add / Remove
+							Wall</button>
+					</div>
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary" onclick="generateWalls()">Random Walls</button>
+					</div>
+				</div>
 			</div>
-			<div class="col-sm-2 text-center">
-				<button type="button" class="btn btn-primary btn-block" id="end" onclick="Grid.resetState(4)">End: (x,
-					y)</button>
+
+			<div class="col-sm-4">
+				<div class="btn-group btn-group-justified">
+					<div class="btn-group">
+						<button type="button" class="btn btn-primary btn-block" onclick="Grid.autoFind(0)"
+							id="auto">Auto
+							Search</button>
+					</div>
+					<div class="btn-group">
+						<button type="button" class="btn btn-success btn-block" onclick="Grid.resetState(5)">Find
+							Path</button>
+					</div>
+				</div>
 			</div>
+
 			<div class="col-sm-2">
-				<button type="button" class="btn btn-primary btn-block" onclick="Grid.reset()">Reset</button>
-			</div>
-			<div class="col-sm-2">
-				<button type="button" class="btn btn-primary btn-block" onclick="Grid.resetState(5)">Find Path</button>
-			</div>
-			<div class="col-sm-2">
-				<button type="button" class="btn btn-primary btn-block" onclick="Grid.autoFind(0)" id="auto">Auto Search</button>
+				<div class="btn-group btn-group-justified">
+					<div class="btn-group">
+						<button type="button" class="btn btn-danger" onclick="Grid.reset()">Reset</button>
+					</div>
+				</div>
 			</div>
 
 		</div>
 		<br>
 		<div class="row" id="grid"></div>
 	</div>
-
-	
 
 	<div class="container">
 		<p id="path"></p>
