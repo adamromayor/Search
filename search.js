@@ -1,7 +1,9 @@
 var startPoint = null;
 var endPoint = null;
 var cursorPoint = null;
-
+var animate = 1;
+var delay = 10;
+var printedOnce = 0;
 //array of component objects
 var walls;
 
@@ -45,18 +47,6 @@ class DistanceCoordinate {
 };
 
 
-
-function testPath() {
-
-    for (let i = 0; i < 20; i++) {
-        pathCoords.push(new Coordinate(5, i));
-    }
-
-    for (let i = 0; i < 20; i++) {
-        pathCoords.push(new Coordinate(i, 7));
-    }
-    Grid.printPath(pathCoords);
-}
 
 function startGrid() {
     cursorPoint = new component(Grid.cellSize / 2, Grid.cellSize / 2, 150, 150, 150, 0, 250);
@@ -110,7 +100,9 @@ var Grid = {
     },
     reset: function () {
         this.clear();
+        this.drawGrid();
         this.state = -1;
+        this.interval = setInterval(updateGrid, 20);
         Grid.sx = null;
         //document.getElementById("path").innerHTML = "";
         walls = [];
@@ -126,18 +118,20 @@ var Grid = {
         if (Grid.state < 2) return;
 
         Grid.state = x;
-        if (x === 3) {
+        if (x === RESET_START) {
+            pathCoords = [];
             document.getElementById("start").innerHTML = "Start: (x, y)";
-        } else if (x === 4) {
+        } else if (x === RESET_END) {
+            pathCoords = [];
             document.getElementById("end").innerHTML = "End: (x, y)";
         }
         document.getElementById("path").innerHTML = "";
         //state 5 is BFS
         //state 6 is DFS
     },
+
     printPath: function (path) { //path is array of coordinate objects
         document.getElementById("grid");
-
         let b = 0;
         let r = 0;
         let g = 128;
@@ -145,13 +139,29 @@ var Grid = {
         this.context.fillStyle = color;
 
         for (let i = 0; i < path.length; i++) {
-            if (b < 200) b += (200 / path.length);
 
-            color = `rgb(${r},${g},${b})`;
-            this.context.fillStyle = color;
-            this.context.fillRect(path[i].x * this.cellSize, path[i].y * this.cellSize, this.cellSize - 1, this.cellSize - 1);
+
+            if (animate == 1) {
+                setTimeout(() => {
+                    if (Grid.state === RESET_GRID || Grid.state == RESET_START || Grid.state == RESET_END) return;
+                    if (b < 200) b += (200 / path.length);
+                    color = `rgb(${r},${g},${b})`;
+                    this.context.fillStyle = color;
+                    this.context.fillRect(path[i].x * this.cellSize, path[i].y * this.cellSize, this.cellSize - 1, this.cellSize - 1);
+                    startPoint.update();
+                    endPoint.update();
+                }, delay);
+            }
+            else {
+                if (Grid.state === RESET_GRID) return;
+                if (b < 200) b += (200 / path.length);
+                color = `rgb(${r},${g},${b})`;
+                this.context.fillStyle = color;
+                this.context.fillRect(path[i].x * this.cellSize, path[i].y * this.cellSize, this.cellSize - 1, this.cellSize - 1);
+                startPoint.update();
+                endPoint.update();
+            }
         }
-
     },
     autoFind: function (x) { //x = 0 is BFS x = 1 is DFS
 
@@ -185,8 +195,6 @@ function component(width, height, r, g, b, x, y) {
 }
 
 function generateWalls() {
-
-
     //will not update if same as starting or ending coordinate
     for (let i = 0; i < Grid.canvas.width / Grid.cellSize; i++) {
 
@@ -217,8 +225,24 @@ function generateWalls() {
     Grid.resetState(2);
 }
 
-
 function findBFS(startingPoint, endingPoint, barriers) {
+
+    if (Grid.state == PATH_FOUND) {
+
+        if (printedOnce == 0) {
+            setTimeout(() => {
+                Grid.printPath(pathCoords);
+                printedOnce = 1;
+
+                Grid.interval = setInterval(updateGrid, 20);
+            }, delay);
+        }
+        else {
+            animate = 0;
+            Grid.printPath(pathCoords);
+        }
+        return true;
+    }
 
     let myPath = new Array();
     let Path = new Array();
@@ -227,7 +251,6 @@ function findBFS(startingPoint, endingPoint, barriers) {
 
     let maxX = Grid.canvas.width / Grid.cellSize;
     let maxY = Grid.canvas.height / Grid.cellSize;
-
     if (startingPoint == null || endingPoint == null) return false;
 
     if (equalCoords(startingPoint, endingPoint)) return true;
@@ -238,7 +261,6 @@ function findBFS(startingPoint, endingPoint, barriers) {
     visited.push(startingPoint);
 
     while (Path.length > 0) {
-
         myPath = Path.shift();
 
         //checks if last vertex in path is the Ending Point
@@ -246,9 +268,9 @@ function findBFS(startingPoint, endingPoint, barriers) {
         if (equalCoords(v, endingPoint)) {
 
             pathCoords = myPath.slice();
+            Grid.printPath(pathCoords);
             return true;
         }
-
 
         if (v.x - 1 >= 0) //move left
         {
@@ -262,13 +284,10 @@ function findBFS(startingPoint, endingPoint, barriers) {
                 newPath.push(coord);
                 Path.push(newPath);
                 visited.push(coord);
-
                 //only prints if Automatic Search is off
-                /*
                 if (Grid.autoFlag === 0) {
                     Grid.printPath(newPath);
                 }
-                */
             }
         }
 
@@ -284,13 +303,10 @@ function findBFS(startingPoint, endingPoint, barriers) {
                 newPath.push(coord);
                 Path.push(newPath);
                 visited.push(coord);
-
                 //only prints if Automatic Search is off
-                /*
                 if (Grid.autoFlag === 0) {
                     Grid.printPath(newPath);
                 }
-                */
             }
         }
 
@@ -305,20 +321,16 @@ function findBFS(startingPoint, endingPoint, barriers) {
                 newPath.push(coord);
                 Path.push(newPath);
                 visited.push(coord);
-
                 //only prints if Automatic Search is off
-                /*
                 if (Grid.autoFlag === 0) {
                     Grid.printPath(newPath);
                 }
-                */
             }
         }
 
         if (v.y + 1 < maxY) //move down
         {
             let coord = new Coordinate(v.x, v.y + 1);
-
             //will only add to path if point is not visited and there is not a barrier
             if (!inList(coord, visited) && !inList(coord, barriers)) {
                 newPath = new Array();
@@ -326,24 +338,35 @@ function findBFS(startingPoint, endingPoint, barriers) {
                 newPath.push(coord);
                 Path.push(newPath);
                 visited.push(coord);
-
                 //only prints if Automatic Search is off
-                /*
                 if (Grid.autoFlag === 0) {
                     Grid.printPath(newPath);
                 }
-                */
             }
         }
-
     }
 
+
+    Grid.interval = setInterval(updateGrid, 20);
     return false;
 }
 
 
 function findDFS(startingPoint, endingPoint, barriers) {
 
+    if (Grid.state == PATH_FOUND) {
+        if (printedOnce == 0) {
+            setTimeout(() => {
+                Grid.printPath(pathCoords);
+                printedOnce = 1;
+            }, delay);
+        }
+        else {
+            animate = 0;
+            Grid.printPath(pathCoords);
+        }
+        return true;
+    }
     let Path = new Array();
     visited = new Array();
 
@@ -360,12 +383,10 @@ function findDFS(startingPoint, endingPoint, barriers) {
     visited.push(startingPoint);
     Path.push(startingPoint);
 
-    //document.getElementById("test").innerHTML = "I am not in loop";
 
     let count = 0;
 
     while (Path.length > 0) {
-
 
         let row = Path[Path.length - 1].x;
         let col = Path[Path.length - 1].y;
@@ -382,12 +403,13 @@ function findDFS(startingPoint, endingPoint, barriers) {
 
                 if (equalCoords(coord, endingPoint)) {
                     pathCoords = Path.slice();
+
+                    Grid.printPath(Path);
+                    setTimeout(() => {
+                        Grid.interval = setInterval(updateGrid, 20);
+                    }, delay);
+
                     return true;
-                }
-                else {
-                    if (Grid.autoFlag == 0) {
-                        //  Grid.printPath(Path);
-                    }
                 }
                 //will continue if not in list and not visited
                 continue;
@@ -406,13 +428,15 @@ function findDFS(startingPoint, endingPoint, barriers) {
 
                 if (equalCoords(coord, endingPoint)) {
                     pathCoords = Path.slice();
+                    Grid.printPath(Path);
+
+                    setTimeout(() => {
+                        Grid.interval = setInterval(updateGrid, 20);
+                    }, delay);
+
                     return true;
                 }
-                else {
-                    if (Grid.autoFlag == 0) {
-                        //    Grid.printPath(Path);
-                    }
-                }
+
                 //will continue if not in list and not visited
                 continue;
             }
@@ -430,12 +454,11 @@ function findDFS(startingPoint, endingPoint, barriers) {
 
                 if (equalCoords(coord, endingPoint)) {
                     pathCoords = Path.slice();
+                    Grid.printPath(Path);
+                    setTimeout(() => {
+                        Grid.interval = setInterval(updateGrid, 20);
+                    }, delay);
                     return true;
-                }
-                else {
-                    if (Grid.autoFlag == 0) {
-                        //      Grid.printPath(Path);
-                    }
                 }
                 //will continue if not in list and not visited
                 continue;
@@ -453,13 +476,13 @@ function findDFS(startingPoint, endingPoint, barriers) {
 
                 if (equalCoords(coord, endingPoint)) {
                     pathCoords = Path.slice();
+                    Grid.printPath(Path);
+                    setTimeout(() => {
+                        Grid.interval = setInterval(updateGrid, 20);
+                    }, delay);
                     return true;
                 }
-                else {
-                    if (Grid.autoFlag == 0) {
-                        //     Grid.printPath(Path);
-                    }
-                }
+
                 //will continue if not in list and not visited
                 continue;
             }
@@ -468,13 +491,25 @@ function findDFS(startingPoint, endingPoint, barriers) {
     }
 
     //Could not find path
+    Grid.interval = setInterval(updateGrid, 20);
     return false;
-
-
-
 }
 
 function findDA(startingPoint, endingPoint, barriers) {
+
+    if (Grid.state == PATH_FOUND) {
+        if (printedOnce == 0) {
+            setTimeout(() => {
+                Grid.printPath(pathCoords);
+                printedOnce = 1;
+            }, delay);
+        }
+        else {
+            animate = 0;
+            Grid.printPath(pathCoords);
+        }
+        return true;
+    }
 
     var dist = new Array();
     var q = new Array();
@@ -513,10 +548,11 @@ function findDA(startingPoint, endingPoint, barriers) {
 
         //returns -1 when v can't be found in list
         if (deleteFromList(v, q) === -1) { //deletes vertex from q
+            setTimeout(() => {
+                Grid.interval = setInterval(updateGrid, 20);
+            }, delay);
             return false;
         }
-
-
 
         let x = v.x;
         let y = v.y;
@@ -527,7 +563,6 @@ function findDA(startingPoint, endingPoint, barriers) {
         if (d === 0) {
             let coord = new Coordinate(x, y);
             dist[v_index].path.push(coord);
-            // document.getElementById("test").innerHTML = "Pushed coordinate onto path";
         }
 
         //For each neighbor of V
@@ -544,6 +579,10 @@ function findDA(startingPoint, endingPoint, barriers) {
                     //path from source until previous node + new node
                     dist[index].path = dist[v_index].path.slice();
                     dist[index].path.push(coord);
+
+                    if (Grid.autoFlag === 0) {
+                        Grid.printPath(dist[index].path);
+                    }
                 }
             }
 
@@ -562,6 +601,9 @@ function findDA(startingPoint, endingPoint, barriers) {
                     //path from source until previous node + new node
                     dist[index].path = dist[v_index].path.slice();
                     dist[index].path.push(coord);
+                    if (Grid.autoFlag === 0) {
+                        Grid.printPath(dist[index].path);
+                    }
                 }
             }
         }
@@ -580,11 +622,12 @@ function findDA(startingPoint, endingPoint, barriers) {
                     //path from source until previous node + new node
                     dist[index].path = dist[v_index].path.slice();
                     dist[index].path.push(coord);
+                    if (Grid.autoFlag === 0) {
+                        Grid.printPath(dist[index].path);
+                    }
                 }
             }
         }
-
-
 
         //Down
         if (y + 1 < maxY) {
@@ -600,6 +643,9 @@ function findDA(startingPoint, endingPoint, barriers) {
                     //path from source until previos node + new node
                     dist[index].path = dist[v_index].path.slice();
                     dist[index].path.push(coord);
+                    if (Grid.autoFlag === 0) {
+                        Grid.printPath(dist[index].path);
+                    }
                 }
             }
         }
@@ -609,9 +655,19 @@ function findDA(startingPoint, endingPoint, barriers) {
 
     if (dist[index].dist < Number.MAX_SAFE_INTEGER) {
         pathCoords = dist[index].path.slice();
+
+        animate = 0;
+        setTimeout(() => {
+            Grid.printPath(pathCoords);
+            Grid.interval = setInterval(updateGrid, 20);
+        }, delay);
+
         return true;
     }
 
+    setTimeout(() => {
+        Grid.interval = setInterval(updateGrid, 20);
+    }, delay);
     return false;
 
 }
@@ -622,9 +678,6 @@ function findDA(startingPoint, endingPoint, barriers) {
 function deleteFromList(node, List) {
 
     for (let i = 0; i < List.length; i++) {
-
-        //   s += " (" + List[i].x +", " + List[i].y +")";
-
         if ((node.x === List[i].x) && (node.y === List[i].y)) {
             List.splice(i, 1);
             return 0;
@@ -641,7 +694,6 @@ function indexOf(coord, dArray) {
             return i;
         }
     }
-
     return -1;
 }
 
@@ -695,8 +747,6 @@ function inList(coord, List) {
     }
     return false;
 }
-
-
 
 function updateGrid() {
 
@@ -892,30 +942,49 @@ function updateGrid() {
 
     //Call BFS
     if (Grid.state === BFS_SEARCH) {
-
+        Grid.searchType = BFS_SEARCH;
+        animate = 1;
+        printedOnce = 0;
+        delay = 10;
         Grid.sx = null;
+
+        clearInterval(Grid.interval);
 
         if (findBFS(startCoords, endCoords, wallCoords)) {
             Grid.state = PATH_FOUND;//path found
         } else {
             Grid.state = PATH_NOT_FOUND; //path not found
         }
+
+
     }
 
     //Call DFS
     if (Grid.state === DFS_SEARCH) {
+        Grid.searchType = DFS_SEARCH;
+        animate = 1;
+        printedOnce = 0;
         Grid.sx = null;
+
+        clearInterval(Grid.interval);
+
         if (findDFS(startCoords, endCoords, wallCoords)) {
             Grid.state = PATH_FOUND;
         } else {
             Grid.state = PATH_NOT_FOUND;
         }
+
     }
 
     //Dijkstra's Algorithm
     if (Grid.state === DA_SEARCH) {
 
+        Grid.searchType = DA_SEARCH;
+        animate = 1;
+        printedOnce = 0;
         Grid.sx = null;
+
+        clearInterval(Grid.interval);
         if (findDA(startCoords, endCoords, wallCoords)) {
             Grid.state = PATH_FOUND;
         } else {
@@ -927,9 +996,19 @@ function updateGrid() {
     //Print Path after search algorithm was called
     if (Grid.state === PATH_FOUND) {
         Grid.sx = null;
-        Grid.printPath(pathCoords);
+        if (Grid.searchType == BFS_SEARCH) {
+            findBFS(startCoords, endCoords, wallCoords)
+        }
+        else if (Grid.searchType == DFS_SEARCH) {
+            findDFS(startCoords, endCoords, wallCoords)
+        }
+        else if (Grid.searchType == DA_SEARCH) {
+            findDA(startCoords, endCoords, wallCoords)
+        }
         document.getElementById("path").innerHTML = "<span class =\"badge badge-pill badge-info\">Path Found</span>";
     }
+
+
 
     //Path Not Found
     if (Grid.state === PATH_NOT_FOUND) {
@@ -945,25 +1024,23 @@ function updateGrid() {
         //Prints The Correct Search Type
 
         if (Grid.autoFlag === 1) {
+
             if (Grid.searchType === 0) {
-                if (findBFS(startCoords, endCoords, wallCoords)
-                    && Grid.state != RESET_START && Grid.state != RESET_END) {
+                if (Grid.state != RESET_START && Grid.state != RESET_END && findBFS(startCoords, endCoords, wallCoords)) {
                     Grid.sx = null;
-                    Grid.printPath(pathCoords);
+                    animate = 0;
                 }
             }
             else if (Grid.searchType === 1) {
-                if (findDFS(startCoords, endCoords, wallCoords)
-                    && Grid.state != RESET_START && Grid.state != RESET_END) {
+                if (Grid.state != RESET_START && Grid.state != RESET_END && findDFS(startCoords, endCoords, wallCoords)) {
                     Grid.sx = null;
-                    Grid.printPath(pathCoords);
+                    animate = 0;
                 }
             }
             else if (Grid.searchType === 2) {
-                if (findDA(startCoords, endCoords, wallCoords)
-                    && Grid.state != RESET_START && Grid.state != RESET_END) {
+                if (Grid.state != RESET_START && Grid.state != RESET_END && findDA(startCoords, endCoords, wallCoords)) {
                     Grid.sx = null;
-                    Grid.printPath(pathCoords);
+                    animate = 0;
                 }
             }
         }
@@ -988,5 +1065,7 @@ function updateGrid() {
 
     //Prints cursor
     cursorPoint.update();
+
+
 }
 
