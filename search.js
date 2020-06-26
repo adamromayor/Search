@@ -145,9 +145,26 @@ var Grid = {
                 setTimeout(() => {
                     if (Grid.state === RESET_GRID || Grid.state == RESET_START || Grid.state == RESET_END) return;
                     if (b < 200) b += (200 / path.length);
-                    color = `rgb(${r},${g},${b})`;
-                    this.context.fillStyle = color;
-                    this.context.fillRect(path[i].x * this.cellSize, path[i].y * this.cellSize, this.cellSize - 1, this.cellSize - 1);
+                    if (i == path.length - 1) {
+                        r = 255;
+                        g = 255;
+                        b = 0;
+                        color = `rgb(${r},${g},${b})`;
+                        this.context.fillStyle = color;
+
+                        this.context.beginPath();
+                        this.context.arc(path[i].x * this.cellSize + this.cellSize / 2, path[i].y * this.cellSize + this.cellSize / 2,
+                            this.cellSize / 4, 0, 2 * Math.PI);
+                        this.context.fill();
+
+                    }
+                    else {
+                        r = 0;
+                        color = `rgb(${r},${g},${b})`;
+                        this.context.fillStyle = color;
+                        this.context.fillRect(path[i].x * this.cellSize, path[i].y * this.cellSize, this.cellSize - 1, this.cellSize - 1);
+                    }
+
                     startPoint.update();
                     endPoint.update();
                 }, delay);
@@ -155,6 +172,14 @@ var Grid = {
             else {
                 if (Grid.state === RESET_GRID) return;
                 if (b < 200) b += (200 / path.length);
+                if (i == path.length - 1) {
+                    r = 100;
+                    g = 50;
+                    b = 0;
+                }
+                else {
+                    r = 0;
+                }
                 color = `rgb(${r},${g},${b})`;
                 this.context.fillStyle = color;
                 this.context.fillRect(path[i].x * this.cellSize, path[i].y * this.cellSize, this.cellSize - 1, this.cellSize - 1);
@@ -266,7 +291,6 @@ function findBFS(startingPoint, endingPoint, barriers) {
         //checks if last vertex in path is the Ending Point
         let v = myPath[myPath.length - 1];
         if (equalCoords(v, endingPoint)) {
-
             pathCoords = myPath.slice();
             Grid.printPath(pathCoords);
             return true;
@@ -291,7 +315,6 @@ function findBFS(startingPoint, endingPoint, barriers) {
             }
         }
 
-        //   document.getElementById("path").innerHTML = "v.x + 1 is " + (v.x + 1) + " and maxX is " + maxX;
         if (v.x + 1 < maxX) //move right
         {
             let coord = new Coordinate(v.x + 1, v.y);
@@ -554,11 +577,35 @@ function findDA(startingPoint, endingPoint, barriers) {
             return false;
         }
 
+
+
         let x = v.x;
         let y = v.y;
         let d = v.dist;
         let v_index = indexOf(v, dist);
 
+
+
+        if (equalCoords(v, endingPoint)) {
+            if (dist[v_index].dist < Number.MAX_SAFE_INTEGER) {
+                pathCoords = dist[v_index].path.slice();
+                animate = 0;
+
+                setTimeout(() => {
+                    Grid.printPath(pathCoords);
+                    Grid.interval = setInterval(updateGrid, 20);
+                }, delay);
+
+                return true;
+            }
+            else {
+                setTimeout(() => {
+                    Grid.interval = setInterval(updateGrid, 20);
+                }, delay);
+                return false;
+            }
+
+        }
 
         if (d === 0) {
             let coord = new Coordinate(x, y);
@@ -571,7 +618,6 @@ function findDA(startingPoint, endingPoint, barriers) {
             let coord = new Coordinate(x - 1, y);
             let alt = d + 1;
             let index = v_index - maxY;
-            //   let index = indexOf(coord, dist);
             if (alt < dist[index].dist) {
                 if (!inList(coord, barriers)) {
                     dist[index].dist = alt;
@@ -593,7 +639,6 @@ function findDA(startingPoint, endingPoint, barriers) {
             let coord = new Coordinate(x, y - 1);
             let alt = d + 1;
             let index = v_index - 1;
-            //  let index = indexOf(coord, dist);
             if (alt < dist[index].dist) {
                 if (!inList(coord, barriers)) {
                     dist[index].dist = alt;
@@ -614,7 +659,6 @@ function findDA(startingPoint, endingPoint, barriers) {
             let coord = new Coordinate(x + 1, y);
             let alt = d + 1;
             let index = v_index + maxY;
-            //let index = indexOf(coord, dist);
             if (alt < dist[index].dist) {
                 if (!inList(coord, barriers)) {
                     dist[index].dist = alt;
@@ -649,20 +693,6 @@ function findDA(startingPoint, endingPoint, barriers) {
                 }
             }
         }
-    }
-
-    let index = indexOf(endingPoint, dist);
-
-    if (dist[index].dist < Number.MAX_SAFE_INTEGER) {
-        pathCoords = dist[index].path.slice();
-
-        animate = 0;
-        setTimeout(() => {
-            Grid.printPath(pathCoords);
-            Grid.interval = setInterval(updateGrid, 20);
-        }, delay);
-
-        return true;
     }
 
     setTimeout(() => {
