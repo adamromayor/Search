@@ -200,6 +200,22 @@ var Grid = {
             this.autoFlag = 1;
             document.getElementById("auto").innerHTML = "Auto Search Off";
         }
+    },
+
+    grow: function(){
+        if(this.cellSize < 100){
+            this.cellSize += 5;
+        }
+
+        this.reset();
+    },
+
+    shrink: function(){
+        if(this.cellSize > 25){
+            this.cellSize -= 5;
+        }
+
+        this.reset();
     }
 }
 
